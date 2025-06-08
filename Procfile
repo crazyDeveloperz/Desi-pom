@@ -1,1 +1,1 @@
-worker: pyhton3 desi.py
+worker: pyhton desi.py
