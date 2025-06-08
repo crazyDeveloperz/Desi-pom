@@ -79,20 +79,6 @@ async def fetch_api_data(session, api_url):
         logger.error(f"API Fetch Error from {api_url}: {e}")
     return []
 # Send video function
-async def send_video_to_channel(video_url, caption, content_url):
-    try:
-        buttons = InlineKeyboardMarkup([[InlineKeyboardButton("📽️ ভিডিও দেখুন", url=content_url)]])
-        await bot.send_video(
-            chat_id=channel_id,
-            video=video_url,
-            caption=caption,
-            reply_markup=buttons,
-            thumb="https://placehold.co/600x400?text=Video+Thumb"
-        )
-        logger.info(f"✅ Video sent successfully: {video_url}")
-    except Exception as e:
-        logger.error(f"❌ Failed to send video: {e}")
-
 async def auto_post():
     logger.info("🔁 Auto post started...")
     video_exts = ('.mp4', '.mov', '.avi', '.mkv', '.webm')
@@ -112,23 +98,38 @@ async def auto_post():
             for idx, item in enumerate(api_data[:5]):
                 name = item.get("name", "Unnamed Video")
                 description = item.get("description", "No description")
-                content_url = item.get("content_url", "https://example.com")
-                video_url = item.get("content_url")
+                content_url = item.get("content_url")
+                video_url = content_url  # because in your JSON it's content_url
+                thumbnail = item.get("thumbnail")
 
                 if video_url and video_url.lower().endswith(video_exts):
-                    caption = f"🔥 {name}\n\n{description}"
-                    await send_video_to_channel(video_url, caption, content_url)
+                    caption = f"🔥 {name}\n\n{description}\n\n🗓️ আপলোড তারিখ: {item.get('upload_date')}"
+                    await send_video_to_channel(video_url, caption, video_url, thumbnail)
                 else:
                     logger.warning(f"Invalid or missing video URL at index {idx}")
 
-                await asyncio.sleep(8)  # Wait 8 sec between posts
+                await asyncio.sleep(8)
 
             logger.info("✅ Batch done, waiting for next cycle...")
-            await asyncio.sleep(300)  # Wait 5 minutes before next batch
+            await asyncio.sleep(300)
 
         except Exception as e:
             logger.exception(f"❗ Auto post error: {e}")
             await asyncio.sleep(60)
+            
+async def send_video_to_channel(video_url, caption, content_url, thumb_url):
+    try:
+        buttons = InlineKeyboardMarkup([[InlineKeyboardButton("📽️ ভিডিও দেখুন", url=content_url)]])
+        await bot.send_video(
+            chat_id=channel_id,
+            video=video_url,
+            caption=caption,
+            reply_markup=buttons,
+            thumb=thumb_url
+        )
+        logger.info(f"✅ Video sent successfully: {video_url}")
+    except Exception as e:
+        logger.error(f"❌ Failed to send video: {e}")
 
 
 if __name__ == "__main__":
