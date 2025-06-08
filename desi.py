@@ -78,14 +78,25 @@ async def fetch_api_data(session, api_url):
     except Exception as e:
         logger.error(f"API Fetch Error from {api_url}: {e}")
     return []
+# Send video function
+async def send_video_to_channel(video_url, caption, content_url):
+    try:
+        buttons = InlineKeyboardMarkup([[InlineKeyboardButton("📽️ ভিডিও দেখুন", url=content_url)]])
+        await bot.send_video(
+            chat_id=channel_id,
+            video=video_url,
+            caption=caption,
+            reply_markup=buttons,
+            thumb="https://placehold.co/600x400?text=Video+Thumb"
+        )
+        logger.info(f"✅ Video sent successfully: {video_url}")
+    except Exception as e:
+        logger.error(f"❌ Failed to send video: {e}")
+
 async def auto_post():
     logger.info("🔁 Auto post started...")
-    
-    # Helper function to check if URL is a video
-    def is_video(url):
-        video_exts = ('.mp4', '.mov', '.avi', '.mkv', '.webm')
-        return url.lower().endswith(video_exts)
-    
+    video_exts = ('.mp4', '.mov', '.avi', '.mkv', '.webm')
+
     while True:
         try:
             selected_api = random.choice(API_LIST)
@@ -98,66 +109,28 @@ async def auto_post():
                 logger.warning("No data from API, using fallback dummy data.")
                 api_data = DUMMY_DATA
 
-            success_count = 0
-            for idx, item in enumerate(api_data[:10]):
-                # Validate required fields
-                required = ['name', 'content_url']
-                if not all(k in item for k in required):
-                    logger.warning(f"Invalid item at index {idx}: Missing required fields")
-                    continue
-                
-                # Prepare media URL (prioritize video)
-                media_url = None
-                is_video_post = False
-                
-                if item.get('video_url') and is_video(item['video_url']):
-                    media_url = item['video_url']
-                    is_video_post = True
-                elif item.get('thumbnail'):
-                    media_url = item['thumbnail']
+            for idx, item in enumerate(api_data[:5]):
+                name = item.get("name", "Unnamed Video")
+                description = item.get("description", "No description")
+                content_url = item.get("content_url", "https://example.com")
+                video_url = item.get("video_url")
+
+                if video_url and video_url.lower().endswith(video_exts):
+                    caption = f"🔥 {name}\n\n{description}"
+                    await send_video_to_channel(video_url, caption, content_url)
                 else:
-                    logger.warning(f"Invalid item at index {idx}: No usable media")
-                    continue
-                
-                # Handle invalid thumbnail formats
-                if not is_video_post:
-                    if not media_url.endswith(('.jpg', '.jpeg', '.png', '.webp')):
-                        media_url = "https://placehold.co/600x400?text=Image+Unavailable"
+                    logger.warning(f"Invalid or missing video URL at index {idx}")
 
-                # Prepare caption and buttons
-                caption = f"🔥 {item['name']}\n\n{item.get('description', 'No description')}"
-                buttons = InlineKeyboardMarkup([[InlineKeyboardButton("📽️ ভিডিও দেখুন", url=item['content_url'])]])
-                
-                try:
-                    # Send video or photo based on type
-                    if is_video_post:
-                        await bot.send_video(
-                            chat_id=channel_id,
-                            video=media_url,
-                            caption=caption,
-                            reply_markup=buttons,
-                            thumb="https://placehold.co/600x400?text=Video+Thumb"  # Optional thumbnail
-                        )
-                    else:
-                        await bot.send_photo(
-                            chat_id=channel_id,
-                            photo=media_url,
-                            caption=caption,
-                            reply_markup=buttons
-                        )
-                    success_count += 1
-                except Exception as e:
-                    logger.error(f"❌ Failed to post item {idx}: {e}")
+                await asyncio.sleep(8)  # Wait 8 sec between posts
 
-                if idx < 9:
-                    await asyncio.sleep(10)  # Short pause between posts
-
-            logger.info(f"✅ সফলভাবে {success_count} টি পোস্ট করা হয়েছে।")
+            logger.info("✅ Batch done, waiting for next cycle...")
             await asyncio.sleep(300)  # Wait 5 minutes before next batch
 
         except Exception as e:
             logger.exception(f"❗ Auto post error: {e}")
-            await asyncio.sleep(60)  # Wait 1 minute on error
+            await asyncio.sleep(60)
+
+
 if __name__ == "__main__":
     Thread(target=run_flask, daemon=True).start()
     logger.info("🤖 Bot is starting...")
