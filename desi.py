@@ -113,7 +113,7 @@ async def auto_post():
                 name = item.get("name", "Unnamed Video")
                 description = item.get("description", "No description")
                 content_url = item.get("content_url", "https://example.com")
-                video_url = item.get("video_url")
+                video_url = item.get("content_url")
 
                 if video_url and video_url.lower().endswith(video_exts):
                     caption = f"🔥 {name}\n\n{description}"
