@@ -78,9 +78,14 @@ async def fetch_api_data(session, api_url):
     except Exception as e:
         logger.error(f"API Fetch Error from {api_url}: {e}")
     return []
-
 async def auto_post():
     logger.info("🔁 Auto post started...")
+    
+    # Helper function to check if URL is a video
+    def is_video(url):
+        video_exts = ('.mp4', '.mov', '.avi', '.mkv', '.webm')
+        return url.lower().endswith(video_exts)
+    
     while True:
         try:
             selected_api = random.choice(API_LIST)
@@ -95,38 +100,64 @@ async def auto_post():
 
             success_count = 0
             for idx, item in enumerate(api_data[:10]):
-                if not all(k in item for k in ['thumbnail', 'name', 'content_url']):
-                    logger.warning(f"Invalid item at index {idx}")
+                # Validate required fields
+                required = ['name', 'content_url']
+                if not all(k in item for k in required):
+                    logger.warning(f"Invalid item at index {idx}: Missing required fields")
                     continue
+                
+                # Prepare media URL (prioritize video)
+                media_url = None
+                is_video_post = False
+                
+                if item.get('video_url') and is_video(item['video_url']):
+                    media_url = item['video_url']
+                    is_video_post = True
+                elif item.get('thumbnail'):
+                    media_url = item['thumbnail']
+                else:
+                    logger.warning(f"Invalid item at index {idx}: No usable media")
+                    continue
+                
+                # Handle invalid thumbnail formats
+                if not is_video_post:
+                    if not media_url.endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                        media_url = "https://placehold.co/600x400?text=Image+Unavailable"
 
-                thumbnail = item['thumbnail']
-                if not thumbnail.endswith(('.jpg', '.jpeg', '.png', '.webp')):
-                    thumbnail = "https://placehold.co/600x400?text=Image+Unavailable"
-
+                # Prepare caption and buttons
                 caption = f"🔥 {item['name']}\n\n{item.get('description', 'No description')}"
                 buttons = InlineKeyboardMarkup([[InlineKeyboardButton("📽️ ভিডিও দেখুন", url=item['content_url'])]])
-
+                
                 try:
-                    await bot.send_photo(
-                        chat_id=channel_id,
-                        photo=thumbnail,
-                        caption=caption,
-                        reply_markup=buttons
-                    )
+                    # Send video or photo based on type
+                    if is_video_post:
+                        await bot.send_video(
+                            chat_id=channel_id,
+                            video=media_url,
+                            caption=caption,
+                            reply_markup=buttons,
+                            thumb="https://placehold.co/600x400?text=Video+Thumb"  # Optional thumbnail
+                        )
+                    else:
+                        await bot.send_photo(
+                            chat_id=channel_id,
+                            photo=media_url,
+                            caption=caption,
+                            reply_markup=buttons
+                        )
                     success_count += 1
                 except Exception as e:
                     logger.error(f"❌ Failed to post item {idx}: {e}")
 
                 if idx < 9:
-                    await asyncio.sleep(10)
+                    await asyncio.sleep(10)  # Short pause between posts
 
             logger.info(f"✅ সফলভাবে {success_count} টি পোস্ট করা হয়েছে।")
-            await asyncio.sleep(300)  # প্রতি 10 মিনিট পর পোস্ট হবে
+            await asyncio.sleep(300)  # Wait 5 minutes before next batch
 
         except Exception as e:
             logger.exception(f"❗ Auto post error: {e}")
-            await asyncio.sleep(60)  # সমস্যা হলে ১ মিনিট অপেক্ষা করবে
-
+            await asyncio.sleep(60)  # Wait 1 minute on error
 if __name__ == "__main__":
     Thread(target=run_flask, daemon=True).start()
     logger.info("🤖 Bot is starting...")
