@@ -37,11 +37,10 @@ def get_random_headers():
         "Cache-Control": "no-cache"
     }
 
-API_ID = int(os.environ.get("API_ID", 1401388))
-API_HASH = os.environ.get("API_HASH", "089a340f2fd06aea683cbfb73pp")
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "8022294985:AAEjHUJ2NHp1WPEcWcQEoeAXz3p7IE9TbFc")
-CHANNEL_ID = -1002699890857
-# Hey man your ☝️ channel ID direct add here
+API_ID = 27499182
+API_HASH = "9c58142ef6abed28808a50e3e983c39c"
+BOT_TOKEN = "8359081864:AAFoL4_SImymzduthNu3VrFPn35znvwgy2s"
+CHANNEL_ID = -1002701779184
 
 
 BLACKLIST_FILE = "blacklist.txt"
