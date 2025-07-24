@@ -188,8 +188,7 @@ async def auto_post():
                         thumb_file = thumb_path if thumb_ok else None
 
                         buttons = InlineKeyboardMarkup([
-                            [InlineKeyboardButton("📽️ Watch online", url=video_url)],
-                            [InlineKeyboardButton("📺 Join Our Channel", url="https://t.me/Opleech_WD")]
+                            [InlineKeyboardButton("📽️ Watch online", url=video_url)]
                         ])
 
                         try:
