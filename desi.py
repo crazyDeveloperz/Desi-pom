@@ -104,14 +104,13 @@ async def auto_post():
                     thumbnail = "https://placehold.co/600x400?text=Image+Unavailable"
 
                 caption = f"🔥 {item['name']}\n\n{item.get('description', 'No description')}"
-                buttons = InlineKeyboardMarkup([[InlineKeyboardButton("📽️ ভিডিও দেখুন", url=item['content_url'])]])
+                
 
                 try:
                     await bot.send_photo(
                         chat_id=channel_id,
                         photo=thumbnail,
-                        caption=caption,
-                        reply_markup=buttons
+                        caption=caption
                     )
                     success_count += 1
                 except Exception as e:
