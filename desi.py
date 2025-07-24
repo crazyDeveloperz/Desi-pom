@@ -29,10 +29,6 @@ def get_random_headers():
         "Cache-Control": "no-cache"
     }
 
-# Env vars
-api_id = int(os.environ.get("API_ID", 27499182))
-api_hash = os.environ.get("API_HASH", "9c58142ef6abed28808a50e3e983c39c")
-bot_token = os.environ.get("BOT_TOKEN", "8359081864:AAFoL4_SImymzduthNu3VrFPn35znvwgy2s")
 channel_id = os.environ.get("CHANNEL_ID", "-1002701779184")
 
 try:
@@ -40,7 +36,15 @@ try:
 except ValueError:
     pass
 
-bot = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
+#bot = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
+
+bot = Client(
+    "my_bot",
+    api_id=27499182,
+    api_hash="9c58142ef6abed28808a50e3e983c39c",
+    bot_token="8359081864:AAFoL4_SImymzduthNu3VrFPn35znvwgy2s"
+)
+
 app = Flask(__name__)
 
 @app.route('/')
